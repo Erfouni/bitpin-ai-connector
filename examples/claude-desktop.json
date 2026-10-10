@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "bitpin": {
+      "command": "/absolute/path/bitpin-ai-connector/.venv/bin/bitpin-ai-connector",
+      "args": ["--directory", "/absolute/path/bitpin-ai-connector", "serve", "--transport", "stdio"]
+    }
+  }
+}

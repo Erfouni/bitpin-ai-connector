@@ -1,0 +1,55 @@
+name: bitpin-ai-connector
+services:
+  connector:
+    image: bitpin-ai-connector:local
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file:
+      - path: .secrets.env
+        format: raw
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:?Run bash install.sh first}
+      TRADING_ENABLED: ${TRADING_ENABLED:-false}
+      AUTH_MODE: ${AUTH_MODE:-oauth}
+      DATA_DIR: /data
+      HOST: 0.0.0.0
+      PORT: 8000
+    volumes:
+      - connector_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 100
+    mem_limit: 512m
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  caddy:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    depends_on:
+      connector:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      CONNECTOR_DOMAIN: ${CONNECTOR_DOMAIN:?Set domain}
+      ACME_EMAIL: ${ACME_EMAIL:?Set certificate contact email}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+volumes:
+  connector_data:
+  caddy_data:
+  caddy_config:

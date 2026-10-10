@@ -1,0 +1,25 @@
+{
+    email {$ACME_EMAIL}
+    admin off
+    log default {
+        format filter {
+            wrap json
+            fields {
+                request>uri replace [redacted]
+                request>headers>Authorization delete
+                request>headers>Cookie delete
+                request>headers>Referer delete
+            }
+        }
+    }
+}
+
+{$CONNECTOR_DOMAIN} {
+    header Strict-Transport-Security "max-age=31536000"
+    request_body {
+        max_size 64KB
+    }
+    reverse_proxy connector:8000 {
+        flush_interval -1
+    }
+}

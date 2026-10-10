@@ -1,0 +1,5 @@
+[mcp_servers.bitpin]
+command = "/absolute/path/bitpin-ai-connector/.venv/bin/bitpin-ai-connector"
+args = ["--directory", "/absolute/path/bitpin-ai-connector", "serve", "--transport", "stdio"]
+# Windows: command = 'C:\path\bitpin-ai-connector\.venv\Scripts\bitpin-ai-connector.exe'
+# Use a Windows absolute --directory argument as well.
