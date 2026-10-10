@@ -40,7 +40,7 @@ services:
       - "443:443/udp"
     environment:
       CONNECTOR_DOMAIN: ${CONNECTOR_DOMAIN:?Set domain}
-      ACME_EMAIL: ${ACME_EMAIL:?Set certificate contact email}
+      CADDY_EMAIL_OPTION: ${ACME_EMAIL:+email ${ACME_EMAIL}}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

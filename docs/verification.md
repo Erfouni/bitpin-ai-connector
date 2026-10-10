@@ -31,3 +31,32 @@ GitHub Actions could not start its runner: GitHub reported failed recent account
 a spending limit requiring an increase. No workflow step ran. This is an account-level CI
 blocker, separate from the successful local Windows and Linux-container tests.
 [Initial run](https://github.com/Erfouni/bitpin-ai-connector/actions/runs/38046340373).
+
+## Fresh-server installer update — 2026-10-10
+
+- 49 offline tests pass in Linux; Windows passes 39 tests and skips the 10
+  Linux-only installer tests. Ruff lint/format and all three shell syntax checks pass.
+- The exact one-command installer copied from both READMEs runs through a real
+  Bash controlling terminal and Git checkout, including the piped-download path.
+  Tests verify installing the downloader first, preserving the IP-registration
+  pause, repeat installation without losing configuration, and early failure for
+  package errors, missing terminals and unrelated directories.
+- Docker preparation tests cover a fresh host, reuse of a working engine,
+  conflicting packages, failed package installation and reuse of an existing apt
+  repository without introducing a conflicting signing-key configuration.
+  Package downloads and systemd calls are mocked; this is not a full VM test
+  matrix for every supported operating system or architecture.
+- Setup tests verify the IP pause followed by only domain, API Key and Secret Key
+  prompts, hidden keys, default trading and the optional read-only flag.
+- The production container rebuilds successfully. Real Docker Compose and Caddy
+  2.11 validation pass both without a contact email and with an optional email.
+- Independent review findings about Docker apt-source reuse and root-owned
+  installation-directory access are addressed in code, tests and both READMEs.
+- The earlier GitHub runner restriction no longer blocks this public repository:
+  [the preceding revision passed CI](https://github.com/Erfouni/bitpin-ai-connector/actions/runs/38047529742).
+
+The fresh-server changes have not been deployed to a real systemd server with a
+private Bitpin account or a public domain. Actual package installation, certificate
+issuance and private account access remain deployment checks; the installer runs
+authenticated read and HTTPS checks before reporting success and never submits a
+trade during installation.

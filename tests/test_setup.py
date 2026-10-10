@@ -63,7 +63,7 @@ def test_installer_shows_ip_before_keys_and_rotation_preserves_credentials(tmp_p
         events.append("ip-discovered")
         return {"ipv4": "8.8.8.8", "ipv6": None}
 
-    answers = iter(["", "mcp.example.com", "owner@example.com", "y"])
+    answers = iter(["", "mcp.example.com"])
 
     def answer(prompt):
         events.append(prompt)
@@ -85,7 +85,11 @@ def test_installer_shows_ip_before_keys_and_rotation_preserves_credentials(tmp_p
     assert "No authentication" in output
     assert events[0] == "ip-discovered"
     assert "After adding" in events[1]
-    assert "API key" in events[4]
+    assert "API key" in events[3]
+    assert len(events) == 5  # IP probe, pause, domain and the two hidden keys only.
+    assert "dummy-api-key" not in output
+    assert "dummy-secret-key" not in output
+    assert "TRADING_ENABLED=true" in (tmp_path / ".env").read_text()
     path = tmp_path / ".secrets.env"
     before = dict(line.split("=", 1) for line in path.read_text().splitlines())
     assert before["CONNECTOR_PASSWORD_HASH"] == ""
@@ -94,3 +98,28 @@ def test_installer_shows_ip_before_keys_and_rotation_preserves_credentials(tmp_p
     after = dict(line.split("=", 1) for line in path.read_text().splitlines())
     assert before.pop("MCP_SECRET_PATH") != after.pop("MCP_SECRET_PATH")
     assert before == after
+
+
+@pytest.mark.parametrize("email", ["", "owner@example.com"])
+def test_certificate_contact_is_optional_but_never_invented(tmp_path, email):
+    setup = runpy.run_path(str(Path(__file__).parents[1] / "scripts" / "setup.py"))
+    assert setup["write_configuration"](
+        tmp_path, domain="mcp.example.com", api_key="test-key", secret_key="test-secret", email=email
+    )
+    assert f"ACME_EMAIL='{email}'" in (tmp_path / ".env").read_text()
+
+
+def test_read_only_flag_does_not_add_an_interactive_prompt(tmp_path, monkeypatch):
+    setup = runpy.run_path(str(Path(__file__).parents[1] / "scripts" / "setup.py"))
+
+    async def fake_ips():
+        return {"ipv4": "8.8.8.8", "ipv6": None}
+
+    setup["main"].__globals__["public_ips"] = fake_ips
+    answers = iter(["", "mcp.example.com"])
+    keys = iter(["test-key", "test-secret"])
+    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+    monkeypatch.setattr("getpass.getpass", lambda _: next(keys))
+    monkeypatch.setattr(sys, "argv", ["setup.py", "--directory", str(tmp_path), "--read-only"])
+    setup["main"]()
+    assert "TRADING_ENABLED=false" in (tmp_path / ".env").read_text()

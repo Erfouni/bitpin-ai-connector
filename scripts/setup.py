@@ -25,7 +25,7 @@ def write_configuration(
     api_key: str,
     secret_key: str,
     password: str = "",
-    email: str,
+    email: str = "",
     local=False,
     trading=True,
     auth_mode="secret_path",
@@ -46,10 +46,10 @@ def write_configuration(
         raise ValueError("Invalid authentication mode")
     if (password or auth_mode == "oauth") and not 12 <= len(password) <= 256:
         raise ValueError("Password must contain 12 to 256 characters")
-    for value in (api_key, secret_key, email):
+    for value in (api_key, secret_key):
         if not value or any(c.isspace() or ord(c) < 32 for c in value):
-            raise ValueError("Keys and email must be nonempty single-line values without whitespace")
-    if not re.fullmatch(r"[A-Za-z0-9.!#$%&*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", email):
+            raise ValueError("Keys must be nonempty single-line values without whitespace")
+    if email and not re.fullmatch(r"[A-Za-z0-9.!#$%&*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", email):
         raise ValueError("Enter a valid certificate contact email")
     password_hash = ""
     if password:
@@ -74,6 +74,8 @@ def main():
     parser = argparse.ArgumentParser(description="Bitpin AI Connector setup")
     parser.add_argument("--directory", type=Path, default=Path.cwd())
     parser.add_argument("--local", action="store_true")
+    parser.add_argument("--email", default="", help="Optional certificate contact email (no prompt)")
+    parser.add_argument("--read-only", action="store_true", help="Disable trading on a fresh installation")
     parser.add_argument(
         "--oauth", action="store_true", help="Use password + OAuth instead of the default secret URL"
     )
@@ -101,11 +103,18 @@ def main():
         "Whitelist this server's PUBLIC outbound IP in Bitpin. Enable account-read and trading permissions."
     )
     print("Keys stay on this server. No OpenAI or Anthropic API key is needed.\n")
+    print(
+        "Trading: "
+        + (
+            "disabled (read-only)."
+            if args.read_only
+            else "enabled for real order placement and cancellation."
+        )
+    )
     print("Detecting server public outbound IP (IPv4 / IPv6)…")
     print_public_ips(asyncio.run(public_ips()))
     input("After adding the displayed outbound IP in Bitpin, press Enter to continue: ")
     domain = "local.example.com" if args.local else input("Domain (example: mcp.example.com): ").strip()
-    email = "local@example.com" if args.local else input("Email for TLS certificate notices: ").strip()
     api_key = getpass.getpass("Bitpin API key (hidden): ").strip()
     secret_key = getpass.getpass("Bitpin secret key (hidden): ").strip()
     password = ""
@@ -113,20 +122,16 @@ def main():
         password = getpass.getpass("Choose connector login password (12+ characters, hidden): ")
         if password != getpass.getpass("Repeat connector password: "):
             raise SystemExit("Passwords did not match; no configuration written.")
-    trading = input("Enable REAL order placement and cancellation? [Y/n]: ").strip().lower() not in {
-        "n",
-        "no",
-    }
     try:
         write_configuration(
             args.directory,
             domain=domain,
-            email=email,
+            email=args.email,
             api_key=api_key,
             secret_key=secret_key,
             password=password,
             local=args.local,
-            trading=trading,
+            trading=not args.read_only,
             auth_mode="oauth" if args.oauth else "secret_path",
         )
     except ValueError as error:

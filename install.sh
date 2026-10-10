@@ -7,18 +7,7 @@ if [[ "$(uname -s)" != Linux ]]; then
   printf '%s\n' 'The server installer requires Linux. See README for local Windows/macOS setup.' >&2
   exit 1
 fi
-if ! command -v docker >/dev/null 2>&1; then
-  printf '%s\n' 'Docker is missing. The official Docker installer can install it on a supported Linux distribution.'
-  read -r -p 'Install Docker using https://get.docker.com now? [Y/n]: ' answer
-  if [[ "$answer" =~ ^[Nn] ]]; then exit 1; fi
-  command -v curl >/dev/null || { printf '%s\n' 'Install curl first.' >&2; exit 1; }
-  installer="$(mktemp)"
-  trap 'rm -f -- "$installer"' EXIT
-  curl --fail --show-error --silent --proto '=https' --tlsv1.2 https://get.docker.com -o "$installer"
-  if [[ "$EUID" -eq 0 ]]; then sh "$installer"; else sudo sh "$installer"; fi
-  rm -f -- "$installer"
-  trap - EXIT
-fi
+bash "$root_dir/scripts/prepare-host.sh"
 docker_cmd=(docker)
 if ! docker info >/dev/null 2>&1; then
   if command -v sudo >/dev/null && sudo docker info >/dev/null 2>&1; then

@@ -10,19 +10,23 @@
 
 این پروژه مستقل از AI Trader است: تصمیم از گفت‌وگوی شما با مدل می‌آید و این سرور ابزار اتصال را فراهم می‌کند. استراتژی، زمان‌بند معامله یا وابستگی به ربات ندارد. برای نصب، **کلید OpenAI یا Anthropic لازم نیست**.
 
-## کوتاه‌ترین مسیر نصب
+## نصب با یک دستور روی سرور خام
 
-اگر روی سرور لینوکس `git` و `curl` دارید، دامنه به آن وصل است و پورت‌های 80 و 443 آزادند، در پوشه‌ای که قبلاً پروژه را دریافت نکرده‌اید همین یک دستور را اجرا کنید:
+روی **Ubuntu 22.04 / 24.04 / 26.04 یا Debian 12 / 13** با systemd، پردازندهٔ amd64 یا arm64 و دسترسی root یا sudo، این یک دستور را در ترمینال SSH اجرا کنید. نصب قبلی Git، curl، Docker یا Python لازم نیست:
 
 </div>
 
 ```bash
-git clone https://github.com/Erfouni/bitpin-ai-connector.git && cd bitpin-ai-connector && bash install.sh
+bash -c 'set -euo pipefail; as_root=; [ "$EUID" -eq 0 ] || as_root=sudo; $as_root apt-get update; $as_root apt-get install -y ca-certificates curl; curl -fsSL https://raw.githubusercontent.com/Erfouni/bitpin-ai-connector/main/bootstrap.sh | $as_root bash'
 ```
 
 <div dir="rtl">
 
-نصب‌کننده نصب Docker را پیشنهاد می‌کند، IP خروجی را نشان می‌دهد، اطلاعات لازم را می‌گیرد و HTTPS را راه‌اندازی می‌کند. هنگام توقف، **IP را در بیت‌پین ثبت کنید**؛ در پایان **آدرس محرمانه را در ChatGPT و Claude اضافه کنید**. تنظیم DNS و تأییدهای داخل حساب‌ها را باید خودتان انجام دهید. اگر پیش‌نیازها آماده نیستند یا بار اول است نصب می‌کنید، مراحل زیر را دنبال کنید. برای نصب موجود، در پوشهٔ پروژه `bash install.sh` را اجرا کنید؛ دریافت دوبارهٔ ریپو لازم نیست.
+دستور، پیش‌نیازها و Docker را خودکار نصب و پروژه را در **`/opt/bitpin-ai-connector`** راه‌اندازی می‌کند. اگر کاربر root نباشید، سیستم ممکن است رمز sudo را بخواهد. خود برنامه فقط **دامنه، API Key و Secret Key بیت‌پین** را می‌پرسد و قبل از گرفتن آن‌ها برای **ثبت IP در بیت‌پین مکث** می‌کند. ایمیل، کلید مدل یا تأیید نصب Docker نمی‌خواهد؛ **معاملهٔ واقعی به‌صورت پیش‌فرض فعال است**.
+
+دامنه باید به سرور اشاره کند و پورت‌های 80 و 443 آزاد و قابل دسترسی باشند. تنظیم DNS و تأییدهای داخل حساب‌ها دستی‌اند. در پایان، آدرس محرمانه را به ChatGPT و Claude می‌دهید. برای دیدن مراحل کامل، ادامه را بخوانید.
+
+اجرای دوبارهٔ همین دستور، کد را به‌روز و تنظیمات و داده‌ها را حفظ می‌کند. روی پوشهٔ نامرتبط یا کد دارای تغییر محلی بازنویسی نمی‌کند. برای نصب قدیمی در مسیری دیگر، از داخل **همان پوشه** `git pull --ff-only` و سپس `bash install.sh` اجرا کنید تا نصب دومی نسازید. بسته‌های ناسازگار Docker و وب‌سرور موجود نیز خودکار حذف نمی‌شوند.
 
 ## نصب قدم‌به‌قدم روی سرور
 
@@ -58,37 +62,23 @@ ssh USER@SERVER_IP
 
 <div dir="rtl">
 
-از اینجا به بعد دستورها داخل سرور اجرا می‌شوند. ابزارهای اولیه را نصب کنید:
-
-</div>
-
-```bash
-sudo apt update
-sudo apt install -y git curl ca-certificates
-```
-
-<div dir="rtl">
-
-اگر با کاربر `root` وارد شده‌اید و `sudo` نصب نیست، دستورهای بالا را بدون `sudo` اجرا کنید.
+از اینجا به بعد دستورها داخل سرور اجرا می‌شوند. کاربر باید root باشد یا دسترسی sudo داشته باشد؛ لازم نیست پیش‌نیازها را جداگانه نصب کنید.
 
 <a id="fa-install"></a>
 
-### ۳. پروژه را دریافت و نصب‌کننده را اجرا کنید
+### ۳. دستور نصب خودکار را اجرا کنید
 
-ریپو عمومی است؛ برای دریافت کد به ورود GitHub یا توکن نیاز ندارید.
+ریپو عمومی است؛ ورود GitHub یا توکن لازم نیست. همان دستور نصب روی سرور خام:
 
 </div>
 
 ```bash
-cd ~
-git clone https://github.com/Erfouni/bitpin-ai-connector.git
-cd bitpin-ai-connector
-bash install.sh
+bash -c 'set -euo pipefail; as_root=; [ "$EUID" -eq 0 ] || as_root=sudo; $as_root apt-get update; $as_root apt-get install -y ca-certificates curl; curl -fsSL https://raw.githubusercontent.com/Erfouni/bitpin-ai-connector/main/bootstrap.sh | $as_root bash'
 ```
 
 <div dir="rtl">
 
-اگر Docker نصب نباشد، نصب‌کننده نصب آن با اسکریپت رسمی Docker را پیشنهاد می‌کند؛ برای ادامه `Y` بزنید. حداقل Docker Compose نسخهٔ **2.30** لازم است. ساخت برنامه ممکن است چند دقیقه طول بکشد.
+نصب‌کننده Git، curl، گواهی‌های سیستم، Docker Engine، Buildx و Compose را در صورت نیاز نصب می‌کند. Docker از [مخزن رسمی Ubuntu](https://docs.docker.com/engine/install/ubuntu/#install-using-the-apt-repository) یا [Debian](https://docs.docker.com/engine/install/debian/#install-using-the-apt-repository) دریافت می‌شود. Compose نسخهٔ **2.30 یا جدیدتر** بررسی می‌شود و Docker آمادهٔ قبلی حفظ می‌شود. دانلود و ساخت برنامه ممکن است چند دقیقه طول بکشد.
 
 سپس نصب‌کننده IP خروجی سرور را نشان می‌دهد و منتظر می‌ماند:
 
@@ -129,10 +119,10 @@ After adding the displayed outbound IP in Bitpin, press Enter to continue:
 | سؤال | پاسخ |
 |---|---|
 | `Domain` | مثل `mcp.example.com`؛ بدون `https://` و بدون `/` |
-| `Email for TLS certificate notices` | ایمیل شما برای گواهی HTTPS |
 | `Bitpin API key` | کلید API بیت‌پین |
 | `Bitpin secret key` | کلید Secret بیت‌پین |
-| `Enable REAL order placement and cancellation? [Y/n]` | `Y` یا Enter برای معاملهٔ واقعی؛ `n` برای فقط مشاهده |
+
+همین سه مورد پرسیده می‌شوند. معاملهٔ واقعی فعال است و HTTPS بدون ایمیل راه‌اندازی می‌شود. برای نصب تازه با دسترسی فقط مشاهده، از داخل پوشهٔ دریافت‌شده `bash install.sh --read-only` اجرا کنید. ایمیل اختیاری را نیز می‌توان با `--email you@example.com` داد؛ هیچ‌کدام سؤال اضافه‌ای ایجاد نمی‌کنند. این گزینه‌ها تنظیمات نصب موجود را تغییر نمی‌دهند.
 
 هنگام واردکردن کلیدها چیزی روی صفحه نمایش داده نمی‌شود؛ طبیعی است. نصب‌کننده سرویس و HTTPS خودکار را راه‌اندازی می‌کند و دسترسی خواندن حساب و HTTPS را **بدون ثبت معامله** بررسی می‌کند. پس از موفقیت، آدرس کامل اتصال را نشان می‌دهد:
 
@@ -185,11 +175,12 @@ https://mcp.example.com/mcp-<random-secret>
 
 دریافت پاسخ موفق برای هر دو، دسترسی بازار و حساب را بررسی می‌کند. با فعال‌بودن معامله در مرحلهٔ ۵، ابزار خرید، فروش و لغو سفارش نیز قابل استفاده است. محدودیت‌ها و تأییدهای خود ChatGPT و Claude مستقل از این سرور هستند؛ فعال‌بودن ابزار معامله تضمین اجرای هر دستور توسط مدل نیست.
 
-برای بررسی وضعیت، داخل پوشهٔ پروژه روی سرور اجرا کنید:
+برای بررسی وضعیت، ابتدا وارد مسیر نصب شوید. نصب خودکار برای حفاظت از تنظیمات متعلق به root است؛ اگر کاربر root نیستید ابتدا `sudo -i` بزنید، سپس:
 
 </div>
 
 ```bash
+cd /opt/bitpin-ai-connector
 docker compose ps
 docker compose exec connector bitpin-ai-connector doctor --private
 docker compose logs --tail 100
@@ -210,7 +201,7 @@ docker compose exec connector bitpin-ai-connector url
 
 <div dir="rtl">
 
-اجرای دوبارهٔ `bash install.sh` تنظیمات موجود را حفظ می‌کند و کلیدها را دوباره نمی‌پرسد. برای بررسی اولیهٔ IP قبل از نصب Docker نیز می‌توانید `curl -4 https://api.ipify.org` و در صورت داشتن IPv6، `curl -6 https://api6.ipify.org` را اجرا کنید؛ مرجع نهایی، مسیر خروجی کانتینر و پذیرش اتصال توسط بیت‌پین است.
+اجرای دوبارهٔ `bash install.sh` تنظیمات موجود را حفظ می‌کند و کلیدها را دوباره نمی‌پرسد. برای مدیریت فایل‌های نصب خودکار از همان نشست root استفاده کنید. برای بررسی اولیهٔ IP قبل از نصب Docker نیز می‌توانید `curl -4 https://api.ipify.org` و در صورت داشتن IPv6، `curl -6 https://api6.ipify.org` را اجرا کنید؛ مرجع نهایی، مسیر خروجی کانتینر و پذیرش اتصال توسط بیت‌پین است.
 
 ## ابزارها
 
@@ -293,7 +284,7 @@ docker compose restart
 
 <div dir="rtl">
 
-به‌روزرسانی: `git pull --ff-only` و سپس `bash install.sh`. توقف با حفظ داده: `docker compose down`، **بدون `-v`**.
+به‌روزرسانی نصب خودکار: دستور تک‌خطی بالای راهنما را دوباره اجرا کنید. برای نصب دستی، در همان پوشه `git pull --ff-only` و سپس `bash install.sh` اجرا کنید؛ در مسیر متعلق به root از sudo استفاده کنید. توقف با حفظ داده: `docker compose down`، **بدون `-v`**.
 
 برای غیرفعال‌کردن معامله، در `.env` مقدار `TRADING_ENABLED=false` بگذارید و `docker compose up -d --force-recreate connector` اجرا کنید. این کار سفارش‌های فعال قبلی را لغو نمی‌کند.
 
@@ -382,6 +373,9 @@ uv run bitpin-ai-connector serve --transport stdio
 | مشکل | بررسی |
 |---|---|
 | clone ناموفق است | آدرس عمومی ریپو، DNS و دسترسی HTTPS به GitHub را بررسی کنید؛ ورود یا توکن لازم نیست |
+| نصب‌کننده terminal می‌خواهد | دستور را در ترمینال تعاملی SSH اجرا کنید؛ در اجرای مستقیم از راه دور از `ssh -t` استفاده کنید |
+| نصب apt ناموفق است | اینترنت، DNS، فضای دیسک و قفل مدیریت بسته‌ها را بررسی کنید؛ دستور با خطا متوقف می‌شود و بعد از رفع علت قابل تکرار است |
+| Conflicting package یا Existing checkout | نصب‌کننده بسته یا کد موجود را حذف نمی‌کند؛ مسیر قبلی یا مهاجرت Docker را بررسی کنید |
 | TLS یا check-https ناموفق | DNS و AAAA، فایروال، پورت‌های 80/443، لاگ Caddy و دسترسی مرجع صدور گواهی |
 | اتصال مدل پیدا نمی‌شود | آدرس کامل شامل مسیر تصادفی و دسترسی اینترنتی سرور؛ در حالت ساده No authentication |
 | بیت‌پین 401/403 | اعتبار API Key/Secret، مجوزها و IP خروجی مجاز |

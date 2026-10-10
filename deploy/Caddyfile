@@ -1,5 +1,5 @@
 {
-    email {$ACME_EMAIL}
+    {$CADDY_EMAIL_OPTION}
     admin off
     log default {
         format filter {

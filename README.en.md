@@ -8,15 +8,19 @@ Connect **Bitpin to ChatGPT, Claude and MCP clients** to read balances, analyze 
 
 This project is independent of AI Trader. It provides tools for your conversations with a model; it does not run a trading strategy or scheduler. **No OpenAI or Anthropic API key is required** when connecting through ChatGPT or Claude.
 
-## Shortest installation path
+## One-command installation on a fresh server
 
-If your Linux server has `git` and `curl`, its domain already points to it, and ports 80/443 are available, run this single command from a directory where you have not already cloned the project:
+On **Ubuntu 22.04 / 24.04 / 26.04 or Debian 12 / 13**, with systemd, amd64/arm64 and root or sudo access, paste this command into your SSH terminal. Git, curl, Docker and Python do not need to be installed beforehand:
 
 ```bash
-git clone https://github.com/Erfouni/bitpin-ai-connector.git && cd bitpin-ai-connector && bash install.sh
+bash -c 'set -euo pipefail; as_root=; [ "$EUID" -eq 0 ] || as_root=sudo; $as_root apt-get update; $as_root apt-get install -y ca-certificates curl; curl -fsSL https://raw.githubusercontent.com/Erfouni/bitpin-ai-connector/main/bootstrap.sh | $as_root bash'
 ```
 
-The installer offers to install Docker, displays the outbound IP, collects configuration and sets up HTTPS. When it pauses, **register the IP in Bitpin**; when it finishes, **add the secret URL to ChatGPT and Claude**. DNS changes and account confirmations remain manual. Follow the detailed steps below if the prerequisites are missing or this is your first installation. For an existing installation, run `bash install.sh` from the project directory without cloning again.
+It installs prerequisites and Docker automatically, then installs the project in **`/opt/bitpin-ai-connector`**. If you are not root, the operating system may request your sudo password. The application asks only for **your domain, Bitpin API Key and Secret Key**, pausing first for **Bitpin IP registration**. There is no email, model-key or Docker-installation prompt. **Real trading is enabled by default.**
+
+Point your domain to the server and make ports 80/443 available and reachable. DNS changes and account confirmations remain manual. Add the generated secret URL to ChatGPT and Claude when installation finishes. Detailed steps follow below.
+
+Rerunning the command updates code and preserves configuration and data. It refuses to overwrite an unrelated directory or a checkout with local changes. If you already installed to a different directory, run `git pull --ff-only` and `bash install.sh` in **that same directory** instead of creating a second installation. Conflicting Docker packages and existing web servers are not automatically removed.
 
 ## Step-by-step server installation
 
@@ -48,29 +52,19 @@ In your computer's terminal, replace the username and IP address:
 ssh USER@SERVER_IP
 ```
 
-Run all remaining shell commands **on the server**. Install the prerequisites:
-
-```bash
-sudo apt update
-sudo apt install -y git curl ca-certificates
-```
-
-If you are signed in as `root` and `sudo` is unavailable, run these commands without `sudo`.
+Run all remaining shell commands **on the server**, as root or a user with sudo access. You do not need to install prerequisites separately.
 
 <a id="en-install"></a>
 
-### 3. Download the project and run the installer
+### 3. Run the automatic installer
 
-The repository is public. No GitHub sign-in or token is needed to download it.
+The repository is public; no GitHub sign-in or token is needed. Use the same fresh-server command:
 
 ```bash
-cd ~
-git clone https://github.com/Erfouni/bitpin-ai-connector.git
-cd bitpin-ai-connector
-bash install.sh
+bash -c 'set -euo pipefail; as_root=; [ "$EUID" -eq 0 ] || as_root=sudo; $as_root apt-get update; $as_root apt-get install -y ca-certificates curl; curl -fsSL https://raw.githubusercontent.com/Erfouni/bitpin-ai-connector/main/bootstrap.sh | $as_root bash'
 ```
 
-If Docker is missing, the installer offers to install it using Docker's official installation script; enter `Y` to continue. Docker Compose **2.30 or later** is required. Building the application may take a few minutes.
+The installer adds Git, curl, system certificates, Docker Engine, Buildx and Compose as needed. Docker uses its official [Ubuntu apt repository](https://docs.docker.com/engine/install/ubuntu/#install-using-the-apt-repository) or [Debian apt repository](https://docs.docker.com/engine/install/debian/#install-using-the-apt-repository). It checks for Compose **2.30+** and reuses a ready Docker installation. Downloads and the application build may take a few minutes.
 
 The installer then displays the server's outbound IP addresses and waits:
 
@@ -107,10 +101,10 @@ IP detection runs inside a container using [ipify](https://www.ipify.org/) witho
 | Prompt | What to enter |
 |---|---|
 | `Domain` | For example `mcp.example.com`, without `https://` or a `/` |
-| `Email for TLS certificate notices` | Your certificate contact email |
 | `Bitpin API key` | Your Bitpin API Key |
 | `Bitpin secret key` | Your Bitpin Secret Key |
-| `Enable REAL order placement and cancellation? [Y/n]` | `Y` or Enter enables real trading; `n` enables read-only use |
+
+These are the only three configuration prompts. Real trading is enabled and HTTPS works without an email address. For a fresh read-only installation, run `bash install.sh --read-only` from the downloaded project directory. An optional email can be supplied with `--email you@example.com`; neither option adds a prompt. These flags do not modify an existing configuration.
 
 The terminal does not display characters while you enter the keys. The installer starts the application with automatic HTTPS and checks authenticated account reads and public HTTPS **without placing any trade**. After success, it prints your full connector URL:
 
@@ -159,9 +153,10 @@ Then verify private account access:
 
 Successful responses to both check market and account access. If you enabled trading in step 5, order placement and cancellation tools are available too. ChatGPT and Claude retain their own approval requirements and restrictions; enabling trading does not guarantee that a host platform will execute every request.
 
-To diagnose a problem, run these commands from the project directory on the server:
+To diagnose a problem, first enter the installation directory on the server. The automatic installation is root-owned to protect configuration; if you are not root, run `sudo -i` first, then:
 
 ```bash
+cd /opt/bitpin-ai-connector
 docker compose ps
 docker compose exec connector bitpin-ai-connector doctor --private
 docker compose logs --tail 100
@@ -176,7 +171,7 @@ docker compose exec connector bitpin-ai-connector ip
 docker compose exec connector bitpin-ai-connector url
 ```
 
-Rerunning `bash install.sh` preserves existing settings and does not prompt for keys again. Before Docker is installed, `curl -4 https://api.ipify.org` and, where available, `curl -6 https://api6.ipify.org` provide an initial check. The container's outbound route and Bitpin's acceptance are the final checks.
+Rerunning `bash install.sh` preserves existing settings and does not prompt for keys again. Manage the root-owned automatic installation from that same root shell. Before Docker is installed, `curl -4 https://api.ipify.org` and, where available, `curl -6 https://api6.ipify.org` provide an initial check. The container's outbound route and Bitpin's acceptance are the final checks.
 
 ## Tools
 
@@ -242,7 +237,7 @@ Each installation serves **one Bitpin account**. Preserve its data when rotating
 
 ## Server management
 
-Run commands in the project directory. Update while preserving settings:
+For an automatic installation, rerun the one-command installer above to update while preserving settings. For a manual installation, run these commands in the same project directory; use sudo if that directory belongs to root:
 
 ```bash
 git pull --ff-only
@@ -328,6 +323,9 @@ The application container runs as a non-root user with a read-only root filesyst
 | Problem | Check |
 |---|---|
 | Clone fails | Public repository URL, DNS and HTTPS access to GitHub; no login/token is required |
+| Installer requires a terminal | Run in an interactive SSH terminal; use `ssh -t` when invoking it remotely |
+| Apt installation fails | Check network/DNS, disk space and package-manager locks; fix the reported failure and rerun |
+| Conflicting package / Existing checkout | The installer will not remove packages or overwrite existing work; check the old installation or migrate Docker first |
 | TLS or `check-https` fails | DNS/AAAA, firewall, ports 80/443, Caddy logs and certificate-authority access |
 | Model cannot connect | Full URL including the random path, public server reachability and No authentication / No sign in |
 | Bitpin 401/403 | API Key/Secret validity, permissions and allowed outbound IP |
