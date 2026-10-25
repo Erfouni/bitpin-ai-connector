@@ -41,6 +41,8 @@ async def doctor(settings, private):
             rows = await client.request(
                 "GET", "/api/v1/wlt/wallets/", private=True, params={"limit": 1, "service": "main"}
             )
+            if not isinstance(rows, list):
+                raise BitpinError("Unexpected wallet response")
             print(json.dumps({"private_api": "ok", "wallet_endpoint_responded": isinstance(rows, list)}))
     finally:
         await client.close()
