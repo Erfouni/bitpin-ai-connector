@@ -64,10 +64,24 @@ def estimate_execution(book: dict, side: str, *, base_amount=None, quote_amount=
     with localcontext() as context:
         context.prec = 60
         for price, quantity in levels:
-            take = min(remaining, quantity) if base_amount is not None else min(remaining / price, quantity)
-            base += take
-            quote += take * price
-            remaining -= take if base_amount is not None else take * price
+            if base_amount is not None:
+                take = min(remaining, quantity)
+                base += take
+                quote += take * price
+                remaining -= take
+            elif quantity >= remaining / price:
+                # This level covers the whole remaining budget, so it is spent
+                # exactly: multiplying the rounded quotient back by the price
+                # leaves a 1e-60 residue that read as uncovered liquidity (#1).
+                take = remaining / price
+                base += take
+                quote += remaining
+                remaining = Decimal(0)
+            else:
+                take = quantity
+                base += take
+                quote += take * price
+                remaining -= take * price
             if remaining <= 0:
                 break
         average = quote / base
