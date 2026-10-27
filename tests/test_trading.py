@@ -176,3 +176,22 @@ def test_a_quote_shortfall_is_still_reported():
     assert result["fully_covered"] is False
     assert result["remaining"] == "4"
     assert result["gross_quote"] == "1"
+
+
+@pytest.mark.parametrize("side", ["buy", "sell"])
+@pytest.mark.parametrize("places", [60, 61, 80])
+def test_a_finite_quote_shortfall_is_not_hidden_by_rounding(side, places):
+    from bitpin_connector.analysis import estimate_execution
+
+    quantity = "0." + "3" * places
+    book = (
+        {"asks": [["3", quantity]], "bids": [["2", "10"]]}
+        if side == "buy"
+        else {"asks": [["4", "10"]], "bids": [["3", quantity]]}
+    )
+    result = estimate_execution(book, side, quote_amount="1")
+
+    assert result["fully_covered"] is False
+    assert result["remaining"] == "0." + "0" * (places - 1) + "1"
+    assert result["gross_quote"] == "0." + "9" * places
+    assert result["gross_base"] == quantity

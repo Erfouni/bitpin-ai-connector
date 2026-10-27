@@ -62,14 +62,19 @@ def estimate_execution(book: dict, side: str, *, base_amount=None, quote_amount=
         raise ValueError("Amount must be positive")
     base = quote = Decimal(0)
     with localcontext() as context:
-        context.prec = 60
+        # Keep finite level capacities exact: rounding one up can hide a real shortfall.
+        context.prec = max(
+            60,
+            len(remaining.as_tuple().digits),
+            max(len(p.as_tuple().digits) + len(q.as_tuple().digits) for p, q in levels),
+        )
         for price, quantity in levels:
             if base_amount is not None:
                 take = min(remaining, quantity)
                 base += take
                 quote += take * price
                 remaining -= take
-            elif quantity >= remaining / price:
+            elif quantity * price >= remaining:
                 # This level covers the whole remaining budget, so it is spent
                 # exactly: multiplying the rounded quotient back by the price
                 # leaves a 1e-60 residue that read as uncovered liquidity (#1).
